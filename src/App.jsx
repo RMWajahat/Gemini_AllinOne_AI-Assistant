@@ -1,37 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
-  Cpu,
-  Key,
-  MessageSquare,
-  Settings,
-  Zap,
-  CheckCircle,
-  AlertCircle,
+  Terminal,
+  Command,
   FileText,
-  Smile,
-  Globe,
-  Send,
-  Loader2
+  Activity,
+  Languages,
+  ChevronRight,
+  ArrowRight,
+  ShieldCheck,
+  ShieldAlert,
+  Search,
+  ExternalLink,
+  Layers
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import logo from './assets/logo.png';
 import './App.css';
 
 const MODES = [
-  { id: 'chat', label: 'Smart Assistant', icon: MessageSquare, description: 'Ask anything to Gemini' },
-  { id: 'summarize', label: 'Summarizer', icon: FileText, description: 'Get key insights from long text' },
-  { id: 'sentiment', label: 'Sentiment Analysis', icon: Smile, description: 'Analyze tone and emotions' },
-  { id: 'translate', label: 'Translator', icon: Globe, description: 'Translate to any language' },
+  { id: 'chat', label: 'Command', icon: Command, description: 'Direct neural interface for standard queries.' },
+  { id: 'summarize', label: 'Summarize', icon: FileText, description: 'High-density information extraction from raw text.' },
+  { id: 'sentiment', label: 'Analyze', icon: Activity, description: 'Emotional spectrum and tonal frequency mapping.' },
+  { id: 'translate', label: 'Translate', icon: Languages, description: 'Universal semantic bridging across global linguistics.' },
 ];
 
 const AVAILABLE_MODELS = [
-  { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Next Gen Fast)' },
-  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Ultra Fast)' },
-  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Most Advanced)' },
+  { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
   { id: 'gemini-2.0-flash-lite', label: 'Gemini 2.0 Flash Lite' },
-  { id: 'gemini-flash-latest', label: 'Gemini Flash (Latest)' },
-  { id: 'gemini-pro-latest', label: 'Gemini Pro (Latest)' },
-  { id: 'gemma-3-27b-it', label: 'Gemma 3 27B (Open Model)' },
+  { id: 'gemini-flash-latest', label: 'Gemini Flash Latest' },
+  { id: 'gemini-pro-latest', label: 'Gemini Pro Latest' },
+  { id: 'gemma-3-27b-it', label: 'Gemma 3 27B' },
 ];
 
 function App() {
@@ -59,16 +60,31 @@ function App() {
     setIsKeyValid(false);
   };
 
-  const runTask = async () => {
-    if (!apiKey) {
-      setError('Please provide a valid Gemini API Key first.');
-      return;
+  const listAvailableModels = async () => {
+    if (!apiKey) return;
+    setIsLoading(true);
+    setResult('');
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      const data = await response.json();
+      if (data.models) {
+        setResult(`Authorized Model Nodes:\n\n${data.models.map(m => m.name.replace('models/', '')).join('\n')}`);
+      } else {
+        throw new Error(data.error?.message || 'Unauthorized');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    if (!inputText.trim()) {
-      setError('Please enter some text to process.');
+  const executeTask = async () => {
+    if (!apiKey) {
+      setError('API Credential Required');
       return;
     }
+    if (!inputText.trim()) return;
 
     setIsLoading(true);
     setError(null);
@@ -80,61 +96,17 @@ function App() {
 
       let prompt = '';
       switch (activeMode) {
-        case 'summarize':
-          prompt = `Summarize the following text briefly and capture the main points:\n\n${inputText}`;
-          break;
-        case 'sentiment':
-          prompt = `Analyze the sentiment of the following text. Be specific about the tone, emotion, and confidence level:\n\n${inputText}`;
-          break;
-        case 'translate':
-          prompt = `Identify the language of the following text and translate it into clear, natural-sounding English. If it is already English, translate it to Spanish:\n\n${inputText}`;
-          break;
-        default:
-          prompt = inputText;
+        case 'summarize': prompt = `Analyze and summarize the following data:\n\n${inputText}`; break;
+        case 'sentiment': prompt = `Perform tonal and sentiment spectrum analysis:\n\n${inputText}`; break;
+        case 'translate': prompt = `Bridge the semantic gap to English (or Spanish if input is English):\n\n${inputText}`; break;
+        default: prompt = inputText;
       }
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      const res = await model.generateContent(prompt);
+      const text = res.response.text();
       setResult(text);
     } catch (err) {
-      console.error(err);
-      setError(err.message || 'An error occurred while communicating with Gemini.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const listAvailableModels = async () => {
-    if (!apiKey) {
-      setError('Please provide a valid Gemini API Key first.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    setResult('');
-
-    try {
-      // Note: listModels is currently not well documented in the simple SDK 
-      // but the error message suggested calling ListModels.
-      // In the @google/generative-ai SDK, it might be different or require a direct fetch.
-      // However, we can try to "probe" common models or just show helpful advice.
-
-      // Attempting to use the SDK to list models if available
-      // If not, we'll provide a clear error message with suggestions.
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-      const data = await response.json();
-
-      if (data.models) {
-        const modelList = data.models.map(m => m.name.replace('models/', '')).join('\n');
-        setResult(`Supported models for your API Key:\n\n${modelList}`);
-      } else {
-        throw new Error(data.error?.message || 'Could not fetch models list.');
-      }
-    } catch (err) {
-      console.error(err);
-      setError('Could not list models. This usually happens if the API key is invalid or restricted. Error: ' + err.message);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -142,138 +114,107 @@ function App() {
 
   return (
     <div className="app-container">
-      <header>
-        <div className="logo">
-          <motion.div
-            initial={{ rotate: -20 }}
-            animate={{ rotate: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Cpu size={32} color="#8e44ad" />
-          </motion.div>
-          <h1>NLP Lab <span style={{ fontWeight: 300, color: 'var(--text-muted)' }}>Gemini Tester</span></h1>
+      <header className="header">
+        <div className="brand">
+          <img src={logo} alt="Logo" className="logo-img" />
+          <h1>Gemma-DO</h1>
         </div>
 
-        <div className="status-indicator">
-          {isKeyValid ? (
-            <span className="status-badge status-valid"><CheckCircle size={14} style={{ marginRight: 4 }} /> API Key Set</span>
-          ) : (
-            <span className="status-badge status-missing"><AlertCircle size={14} style={{ marginRight: 4 }} /> Missing API Key</span>
-          )}
+        <div className={`status-pip ${isKeyValid ? 'status-active' : 'status-inactive'}`}>
+          {isKeyValid ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
+          {isKeyValid ? 'System Online' : 'System Offline'}
         </div>
       </header>
 
-      <section className="glass api-key-section">
-        <label style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Gemini API Key</label>
-        <div className="input-group">
-          <input
-            type="password"
-            placeholder="Enter your API Key here..."
-            value={tempKey}
-            onChange={(e) => setTempKey(e.target.value)}
-            style={{ flex: 1 }}
-          />
-          <button className="btn-primary" onClick={saveKey}>Save Key</button>
-          {apiKey && <button className="btn-outline" onClick={clearKey}>Clear</button>}
-        </div>
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          Your key is stored locally in your browser. Get one from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>Google AI Studio</a>.
-        </p>
-
-        <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-          <label style={{ fontSize: '0.875rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Select Model</label>
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            style={{ width: '100%', cursor: 'pointer' }}
-          >
-            {AVAILABLE_MODELS.map(m => (
-              <option key={m.id} value={m.id}>{m.label}</option>
-            ))}
-          </select>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-            Note: If you get a 404 error, that specific model might not be enabled for your key yet.
-          </p>
-          <button
-            className="btn-outline"
-            onClick={listAvailableModels}
-            style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.75rem', padding: '0.5rem' }}
-          >
-            Check All Supported Models for this Key
-          </button>
-        </div>
-      </section>
-
-      <div className="main-layout">
-        <aside className="sidebar">
+      <div className="main-grid">
+        <aside className="nav-sidebar">
+          <span className="section-label">Capabilities</span>
           {MODES.map((mode) => (
             <div
               key={mode.id}
-              className={`nav-item ${activeMode === mode.id ? 'active' : ''}`}
+              className={`nav-link ${activeMode === mode.id ? 'active' : ''}`}
               onClick={() => {
                 setActiveMode(mode.id);
                 setResult('');
                 setError(null);
               }}
             >
-              <mode.icon size={20} />
+              <mode.icon size={18} />
               <span>{mode.label}</span>
             </div>
           ))}
+
+          <div style={{ marginTop: '3rem' }}>
+            <span className="section-label">Configuration</span>
+            <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label className="section-label" style={{ fontSize: '0.65rem' }}>Model Node</label>
+                <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
+                  {AVAILABLE_MODELS.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+                </select>
+              </div>
+              <button className="btn btn-secondary" style={{ width: '100%', fontSize: '0.75rem' }} onClick={listAvailableModels}>
+                <Search size={14} /> Probe Nodes
+              </button>
+            </div>
+          </div>
         </aside>
 
-        <main className="glass content-area">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ fontSize: '1.25rem' }}>{MODES.find(m => m.id === activeMode).label}</h2>
-            <Zap size={18} color="var(--primary)" />
-          </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            {MODES.find(m => m.id === activeMode).description}
-          </p>
-
-          <textarea
-            placeholder={activeMode === 'chat' ? "Type your prompt or question here..." : "Paste the text you want to process..."}
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            style={{ height: '150px', resize: 'vertical' }}
-          />
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              className="btn-primary"
-              onClick={runTask}
-              disabled={isLoading}
-              style={{ padding: '0.75rem 2.5rem' }}
-            >
-              {isLoading ? <Loader2 className="loader" /> : <><Send size={18} /> Execute</>}
-            </button>
+        <main className="workspace">
+          <div className="api-section">
+            <span className="section-label">Authentication</span>
+            <div className="input-row">
+              <input
+                type="password"
+                placeholder="Enter Gemini API Credential..."
+                value={tempKey}
+                onChange={(e) => setTempKey(e.target.value)}
+              />
+              <button className="btn" onClick={saveKey}>Initialize</button>
+              {apiKey && <button className="btn btn-secondary" onClick={clearKey}>Revoke</button>}
+            </div>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" className="nav-link" style={{ padding: '1rem 0', display: 'flex' }}>
+              Get authentication key <ExternalLink size={14} />
+            </a>
           </div>
 
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                style={{ color: 'var(--error)', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', fontSize: '0.9rem', wordBreak: 'break-word', overflowWrap: 'break-word' }}
-              >
-                {error}
-              </motion.div>
-            )}
+          <section>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <span className="section-label">{MODES.find(m => m.id === activeMode).label} Interface</span>
+              <Layers size={16} color="var(--accents-4)" />
+            </div>
 
-            {result && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="result-card"
-              >
-                <div style={{ fontWeight: 600, marginBottom: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Cpu size={16} /> Gemini Result:
-                </div>
-                {result}
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <div className="textarea-container">
+              <textarea
+                placeholder={`Input raw data for ${activeMode} analysis...`}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+              <button className="btn" onClick={executeTask} disabled={isLoading}>
+                {isLoading ? <div className="loader-anim" /> : <><ArrowRight size={18} /> Execute Pipeline</>}
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {error && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="error-toast">
+                  <Terminal size={14} style={{ marginRight: 8 }} /> {error}
+                </motion.div>
+              )}
+
+              {result && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="result-area">
+                  <span className="section-label">Output Stack</span>
+                  <div className="result-content">
+                    {result}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
         </main>
       </div>
     </div>

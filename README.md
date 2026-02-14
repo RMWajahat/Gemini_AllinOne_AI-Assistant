@@ -1,49 +1,45 @@
-# Gemini All-in-One AI Assistant
+# Gemma-DO
 
-A high-performance NLP interface powered by Gemini 2.0 and 2.5 models. Built with React and Vite for optimal developer experience and performance.
+A high-performance neural pipeline interface powered by Gemini 2.0 and 2.5. Engineered for professional NLP analysis and automated task execution.
 
 ## Core Capabilities
 
-- **Natural Language Chat**: Direct low-latency interaction with Gemini 1.5/2.0/2.5 Flash and Pro models.
-- **Content Summarization**: Automated extraction of key insights from complex documents.
-- **Tone Analysis**: Sentiment and emotional intelligence processing for provided text.
-- **Contextual Translation**: Language detection and high-fidelity English/Spanish translation.
-- **Model Diagnostics**: Real-time discovery of authorized models for a specific API credential.
+- **Neural Command**: Dynamic interaction with advanced LLM nodes (2.0 Flash, 2.5 Pro).
+- **Data Summarization**: Algorithmic extraction of key information from high-density text.
+- **Spectrum Analysis**: Multi-layered tonal and sentiment frequency mapping.
+- **Semantic Translation**: Cross-linguistic bridging with context preservation.
+- **Node Diagnostics**: Automated discovery of authorized system endpoints per credential.
 
-## Design Architecture
+## Design System
 
-- **Glassmorphic UI**: Modern aesthetic utilizing modern CSS backdrop-filters and variables.
-- **Optimized Layout**: Engineered for desktop and workstation screen resolutions with intelligent overflow handling.
-- **Motion System**: Smooth state transitions utilizing Framer Motion.
-- **Local Persistence**: Client-side API key management via browser storage for maximum security.
+Gemma-DO utilizes a strictly professional, technical aesthetic inspired by high-fidelity developer tools:
+- **Monochromatic Interface**: High-contrast black and white palette for reduced cognitive load.
+- **Geometric Layout**: Engineered for workstation resolutions with deterministic spacing.
+- **System Status Visualization**: Real-time authentication and pipeline status monitoring.
+- **Zero-Trust Security**: Client-side credential management with local-only persistence.
 
 ## Infrastructure
 
 - **Framework**: [React](https://react.dev/)
-- **Build Tool**: [Vite](https://vitejs.dev/)
-- **AI Engine**: [@google/generative-ai](https://www.npmjs.com/package/@google/generative-ai)
-- **Styling**: Vanilla CSS (Global Design Tokens)
+- **Build Engine**: [Vite](https://vitejs.dev/)
+- **AI Integration**: [@google/generative-ai](https://www.npmjs.com/package/@google/generative-ai)
+- **Interface**: [Lucide](https://lucide.dev/) + [Framer Motion](https://www.framer.com/motion/)
 
-## Getting Started
+## Deployment
 
-1. **Install dependencies**
+1. **Environmental Setup**
    ```bash
    npm install
    ```
 
-2. **Run dev server**
+2. **Initialization**
    ```bash
    npm run dev
    ```
 
-3. **Production build**
-   ```bash
-   npm run build
-   ```
+## Authorization
 
-## Security
-
-This application does not utilize a backend. All API interactions occur directly between the client's browser and Google's Generative AI endpoints. API keys are stored in the user's `localStorage` and are never transmitted to third-party services.
+Access requires a valid Gemini API credential. Credentials are encrypted and stored within the browser's `localStorage` and never exit the client sandbox except for direct Google API calls.
 
 ## License
 
